@@ -141,15 +141,13 @@ function App() {
 
         <br></br>
         <br></br>
-        <br></br>
-        <br></br>
 
         <Row>
           <Col>
-           <h3>Twitter data component</h3>
+           <h5>Found credential for Twitter Handle: {twitterAccount} </h5>
           </Col>
           <Col>
-            <h3>Github data component</h3>
+           <h5>Found credential for Github Handle: {githubAccount}</h5>
           </Col>
         </Row>
       </Container>

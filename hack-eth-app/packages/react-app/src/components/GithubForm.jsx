@@ -55,39 +55,40 @@ export const GithubForm = (props) => {
         const owner = props.provider.getSigner();
         const address = await owner.getAddress();
         const handle = message.split(" ")[0]
-        const link = data.link.split("/")[5]
+        const link = data.link.split("/")[4]
 
-        // const results = await axios.get(`http://localhost:4000/github/${handle}/${encodeURI(message)}/${address}/${link}`)
-        // console.log(results.data)
+        console.log(`URL: http://localhost:4000/github/${handle}/${encodeURI(message)}/${address}/${link}`)
+        const results = await axios.get(`http://localhost:4000/github/${handle}/${encodeURI(message)}/${address}/${link}`)
+        console.log(results.data)
         setLoading(false)
         setVCButtonState(false)
 
-        // if(results.data.verified==true){
-        //     setAlert(
-        //         <Alert variant="success">
-        //             Credential has been issued!
-        //             <div className="d-flex justify-content-end">
-        //                 <Button onClick={() => setAlert(false)} variant="outline-success">
-        //                     Close
-        //                 </Button>
-        //             </div>
+        if(results.data.verified==true){
+            setAlert(
+                <Alert variant="success">
+                    Credential has been issued!
+                    <div className="d-flex justify-content-end">
+                        <Button onClick={() => setAlert(false)} variant="outline-success">
+                            Close
+                        </Button>
+                    </div>
                     
-        //         </Alert>
-        //     )
-        // }
+                </Alert>
+            )
+        }
 
-        // if(results.data.verified==false){
-        //     setAlert(
-        //         <Alert variant="danger">
-        //             Verification failed - did you make sure to link the correct gist? 
-        //             <div className="d-flex justify-content-end">
-        //                 <Button onClick={() => setAlert(false)} variant="outline-danger">
-        //                     Close
-        //                 </Button>
-        //             </div>
-        //         </Alert>
-        //     )
-        // }
+        if(results.data.verified==false){
+            setAlert(
+                <Alert variant="danger">
+                    Verification failed - did you make sure to link the correct gist? 
+                    <div className="d-flex justify-content-end">
+                        <Button onClick={() => setAlert(false)} variant="outline-danger">
+                            Close
+                        </Button>
+                    </div>
+                </Alert>
+            )
+        }
     }
 
     return (
@@ -108,7 +109,7 @@ export const GithubForm = (props) => {
                     <b>Input your github handle and sign the message popup</b>
                     </p>
                         <form onSubmit={handleSubmit(createSign)}>
-                            <input defaultValue="AndrewRinkeby" {...register("handle", { required: true })} />
+                            <input defaultValue="andrewhong5297" {...register("handle", { required: true })} />
                             {errors.handle && <span>This field is required</span>}
                             <input type="submit" />
                         </form>
@@ -124,7 +125,7 @@ export const GithubForm = (props) => {
                         <b>After posting, paste the gist link below and claim your credential</b>
                     </p>
                         <form onSubmit={handleSubmit(checkSig)}>
-                        <input defaultValue="andrewhong5297" {...register("link", { required: true })} />
+                        <input defaultValue="https://gist.github.com/andrewhong5297/ec166e0aec3ae3c9bfe7eb2a0ceeae7f" {...register("link", { required: true })} />
                         {errors.link && <span>This field is required</span>}
                         <input type="submit" disabled={getVCButton}/>
                         { isLoading
