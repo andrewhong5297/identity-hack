@@ -60,9 +60,12 @@ function App() {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="mr-auto">
-            <Nav.Link href="https://youtu.be/_4RbHpNJAA8">Serto Agent</Nav.Link>
-            <Nav.Link href="https://hack.ethglobal.co/marketmake/teams/rechblh1Znn8U0uzU/recpnc2Ir529X7aJI">
-              Verifiable Credential Schema
+            <Nav.Link href="https://docs.serto.id/docs/serto-agent/getting-started">Serto Agent</Nav.Link>
+            <Nav.Link href="https://staging.schemas.serto.id/schema/twitter-verify">
+              Twitter VC Schema
+            </Nav.Link>
+            <Nav.Link href="https://staging.schemas.serto.id/schema/twitter-verify">
+              Github VC Schema
             </Nav.Link>
           </Nav>
         </Navbar.Collapse>
