@@ -1,9 +1,9 @@
 import React from "react";
 import { Contract } from "@ethersproject/contracts";
 import { getDefaultProvider } from "@ethersproject/providers";
-import { useQuery } from "@apollo/react-hooks";
 import { useState, useEffect } from "react";
 import background from "./congruent_pentagon.png"
+import { ethers } from "ethers";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
@@ -14,13 +14,13 @@ import {
   Button,
   Spinner,
   Container,
-  Alert,
-  Modal
+  Alert
 } from "react-bootstrap";
 
 import useWeb3Modal from "./hooks/useWeb3Modal";
 
 import { TwitterForm } from "./components/TwitterForm"
+import { GithubForm } from "./components/GithubForm"
 
 function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
   return (
@@ -41,8 +41,35 @@ function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
 function App() {
   const [provider, loadWeb3Modal, logoutOfWeb3Modal] = useWeb3Modal();
   const [twitterModalShow, setTwitterModalShow] = useState(false);
+  const [githubModalShow, setGithubModalShow] = useState(false);
 
-  //need to check for VCs, if false then allow buttons otherwise disable buttons.
+  const [githubAccount, setGithubAccount] = useState("not set")
+  const [twitterAccount, setTwitterAccount] = useState("not set")
+  const [verificationState, setVerificationState] = useState(false)
+
+  async function checkVC() {
+    console.log("checking for VCs")
+    //need to check for VCs, if false then allow buttons otherwise disable buttons.
+    const verified = false
+    if (verified) {
+      setVerificationState(true)
+    }
+
+    setGithubAccount("@andrewhong5297")
+    setTwitterAccount("@andrewhong5297")
+  }
+  
+  useEffect(() => {
+    try {
+      const owner = provider.getSigner();
+
+      if(owner!=undefined){
+          //call metamask snaps api
+          checkVC()
+      } 
+    } catch (error) {
+    }
+  },[provider])
 
   return (
     <div
@@ -85,6 +112,7 @@ function App() {
             <Button style = {{fontSize: 14}}
                               onClick={() => setTwitterModalShow(true)}
                               variant="secondary"
+                              disabled={verificationState}
                             >
                               Get Twitter Verification
                             </Button >
@@ -97,14 +125,15 @@ function App() {
 
           <Col>
             <Button style = {{fontSize: 14}}
-                              onClick={() => setTwitterModalShow(true)}
+                              onClick={() => setGithubModalShow(true)}
                               variant="secondary"
+                              disabled={verificationState}
                             >
                               Get Github Verification
                             </Button >
-            <TwitterForm
-              show={twitterModalShow}
-              onHide={() => setTwitterModalShow(false)}
+            <GithubForm
+              show={githubModalShow}
+              onHide={() => setGithubModalShow(false)}
               provider={provider}
             />
           </Col>
@@ -117,10 +146,10 @@ function App() {
 
         <Row>
           <Col>
-           <h3>Github data component</h3>
+           <h3>Twitter data component</h3>
           </Col>
           <Col>
-            <h3>Twitter data component</h3>
+            <h3>Github data component</h3>
           </Col>
         </Row>
       </Container>
