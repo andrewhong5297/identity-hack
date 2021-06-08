@@ -2,24 +2,25 @@ import React from "react";
 import { Contract } from "@ethersproject/contracts";
 import { getDefaultProvider } from "@ethersproject/providers";
 import { useQuery } from "@apollo/react-hooks";
+import { useState, useEffect } from "react";
+import background from "./congruent_pentagon.png"
 
-import { Body, Button, Header, Image, Link } from "./components";
-import logo from "./ethereumLogo.png";
+import "bootstrap/dist/css/bootstrap.min.css";
+import {
+  Row, 
+  Navbar,
+  Nav,
+  Col,
+  Button,
+  Spinner,
+  Container,
+  Alert,
+  Modal
+} from "react-bootstrap";
+
 import useWeb3Modal from "./hooks/useWeb3Modal";
 
-import { addresses, abis } from "@project/contracts";
-import GET_TRANSFERS from "./graphql/subgraph";
-
-async function readOnChainData() {
-  // Should replace with the end-user wallet, e.g. Metamask
-  const defaultProvider = getDefaultProvider();
-  // Create an instance of an ethers.js Contract
-  // Read more about ethers.js on https://docs.ethers.io/v5/api/contract/contract/
-  const ceaErc20 = new Contract(addresses.ceaErc20, abis.erc20, defaultProvider);
-  // A pre-defined address that owns some CEAERC20 tokens
-  const tokenBalance = await ceaErc20.balanceOf("0x3f8CB69d9c0ED01923F11c829BaE4D9a4CB6c82C");
-  console.log({ tokenBalance: tokenBalance.toString() });
-}
+import { TwitterForm } from "./components/TwitterForm"
 
 function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
   return (
@@ -38,35 +39,89 @@ function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
 }
 
 function App() {
-  const { loading, error, data } = useQuery(GET_TRANSFERS);
   const [provider, loadWeb3Modal, logoutOfWeb3Modal] = useWeb3Modal();
+  const [twitterModalShow, setTwitterModalShow] = useState(false);
 
-  React.useEffect(() => {
-    if (!loading && !error && data && data.transfers) {
-      console.log({ transfers: data.transfers });
-    }
-  }, [loading, error, data]);
+  //need to check for VCs, if false then allow buttons otherwise disable buttons.
 
   return (
-    <div>
-      <Header>
-        <WalletButton provider={provider} loadWeb3Modal={loadWeb3Modal} logoutOfWeb3Modal={logoutOfWeb3Modal} />
-      </Header>
-      <Body>
-        <Image src={logo} alt="react-logo" />
-        <p>
-          Edit <code>packages/react-app/src/App.js</code> and save to reload.
-        </p>
-        {/* Remove the "hidden" prop and open the JavaScript console in the browser to see what this function does */}
-        <Button hidden onClick={() => readOnChainData()}>
-          Read On-Chain Balance
-        </Button>
-        <Link href="https://ethereum.org/developers/#getting-started" style={{ marginTop: "8px" }}>
-          Learn Ethereum
-        </Link>
-        <Link href="https://reactjs.org">Learn React</Link>
-        <Link href="https://thegraph.com/docs/quick-start">Learn The Graph</Link>
-      </Body>
+    <div
+      style={{
+        backgroundImage: `url(${background})`,
+      }}
+    >
+      <Navbar bg="light" expand="lg">
+        <Navbar.Brand href="#home">
+          <span role="img" aria-label="doge">
+          🆔
+          </span>{" "}
+          Hack-Identity
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="mr-auto">
+            <Nav.Link href="https://youtu.be/_4RbHpNJAA8">Serto Agent</Nav.Link>
+            <Nav.Link href="https://hack.ethglobal.co/marketmake/teams/rechblh1Znn8U0uzU/recpnc2Ir529X7aJI">
+              Verifiable Credential Schema
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+        <WalletButton
+            className="ml-auto"
+            provider={provider}
+            loadWeb3Modal={loadWeb3Modal}
+            logoutOfWeb3Modal={logoutOfWeb3Modal}
+          />
+      </Navbar>
+
+      <br></br>
+
+      <Container>
+        <Row>
+          <Col>
+            <Button style = {{fontSize: 14}}
+                              onClick={() => setTwitterModalShow(true)}
+                              variant="secondary"
+                            >
+                              Get Twitter Verification
+                            </Button >
+            <TwitterForm
+              show={twitterModalShow}
+              onHide={() => setTwitterModalShow(false)}
+              provider={provider}
+            />
+          </Col>
+
+          <Col>
+            <Button style = {{fontSize: 14}}
+                              onClick={() => setTwitterModalShow(true)}
+                              variant="secondary"
+                            >
+                              Get Github Verification
+                            </Button >
+            <TwitterForm
+              show={twitterModalShow}
+              onHide={() => setTwitterModalShow(false)}
+              provider={provider}
+            />
+          </Col>
+        </Row>
+
+        <br></br>
+        <br></br>
+        <br></br>
+        <br></br>
+
+        <Row>
+          <Col>
+           <h3>Github data component</h3>
+          </Col>
+          <Col>
+            <h3>Twitter data component</h3>
+          </Col>
+        </Row>
+      </Container>
+      {/* fill out the whole page with twitter and github data */}
     </div>
   );
 }
