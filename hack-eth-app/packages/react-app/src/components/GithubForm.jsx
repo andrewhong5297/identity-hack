@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
-    Row, 
-    Col,
     Button,
     Spinner,
-    Container,
     Alert,
     Modal
   } from "react-bootstrap";

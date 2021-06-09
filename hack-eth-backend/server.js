@@ -38,41 +38,73 @@ app.get('/twitter/:handle/:message/:address', async (req,res) => {
             if(d.includes("Tweeting to verify ownership hack-id") && found===false)
             {
                 sig = d.split("sig:")[1];
-                console.log(idx)
                 final_link = results_links[idx>0 ? idx*3-1 : 2] //multiple of 3 doesn't work if it is the most recent tweet
                 found=true
             }
         })
         const sig_address = await ethers.utils.verifyMessage(req.params.message, sig);
 
-        const verified = sig_address==req.params.address ? true : false 
+        let verified = sig_address==req.params.address ? true : false 
 
-        console.log(req.params.address, req.params.handle, final_link, req.params.message)
+        console.log("finished verification: ", req.params.address, req.params.handle, final_link, req.params.message)
+        
+        if(verified===true) {
+            console.log("try to issue vc...")
+            const credential = JSON.stringify({
+                "credential": {
+                    "@context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://staging.api.schemas.serto.id/v1/public/twitter-verify/1.1/ld-context.json"
+                    ],
+                    "type": [
+                        "VerifiableCredential",
+                        "TwitterVerify"
+                    ],
+                    "issuer": {
+                        "id": "did:ethr:0x02cb339a60324c92bd8f0169c7d819d178b3014da0ec4c85dd93afb8965a539584"
+                    },
+                    "issuanceDate": new Date().toISOString(),
+                    "credentialSubject": {
+                        "id": `did:ethr:${req.params.address}`,
+                        "twitterAccount": req.params.handle,
+                        "proof": final_link
+                    },
+                    "credentialSchema": {
+                        "id": "https://staging.api.schemas.serto.id/v1/public/twitter-verify/1.1/json-schema.json",
+                        "type": "JsonSchemaValidator2018"
+                    }
+                },
+                "revocable": true,
+                "keepCopy": true,
+                "save": "true",
+                "proofFormat": "jwt"
+            })
 
-        // issue VC here
-        const config = {
-            method: "post",
-            url: "http://localhost:8083/v1/agent/createVerifiableCredential/",
-            headers: {
-                "authorization": "Bearer BEARERTOKEN",
-                "content-type": "application/json",
-            },
-            body: `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
-            \"https://staging.api.schemas.serto.id/v1/public/twitter-verify/1.1/ld-context.json\"], \
-            \"type\":[\"VerifiableCredential\",\"TwitterVerify\"], \
-            \"issuer\":{\"id\":\"did:ethr:0x039c4df0450b6790efab89bc6e64375ec5c900a4e0ea5179655a94ae743643fc94\"}, \
-            \"issuanceDate\":\"2021-06-08T22:14:22.770Z\", \
-            \"credentialSubject\":{\"id\":\"did:ethr:${req.params.address}\", \
-                                    \"twitterAccount\":\"${req.params.handle}\", \
-                                    \"proof\":\"${final_link}\"}, \
-            \"credentialSchema\":{\"id\":\"https://staging.api.schemas.serto.id/v1/public/twitter-verify/1.1/json-schema.json\",\"type\":\"JsonSchemaValidator2018\"}}, \
-            \"revocable\":true,\"keepCopy\":true,\"save\":\"true\",\"proofFormat\":\"jwt\"}`
+            const config = {
+                method: "post",
+                url: "https://beta.agent.serto.id/v1/agent/createVerifiableCredential/",
+                headers: {
+                    'authorization': process.env.API_KEY,
+                    "content-type": "application/json",
+                },
+                body: credential
+                }
+            try {
+                console.log(config)
+                const response = await axios(config)
+                verified=true;
+                console.log(response.data)
+            } catch (error) {
+                console.log(error.response.data)
+                res.send(error)
+                verified=false;
             }
+        }
 
         res.send({sig_address, verified});
     } catch (error) {
-        console.log(error)
-        res.send({ error: error.reason, verified: false})
+        // console.log(error)
+        // res.send({ error: error.reason, verified: false})
     }
 })
 
@@ -88,65 +120,115 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
             let code = document.querySelector('div[class="Box-body p-0 blob-wrapper data type-javascript  gist-border-0"]').textContent
             return { username, code}
         }) 
-        console.log(results);
+        // console.log(results);
 
         let sig = results.code.split("sig:")[1].trim();
         const sig_address = await ethers.utils.verifyMessage(req.params.message, sig);
 
-        const verified = sig_address==req.params.address && req.params.handle ==results.username ? true : false 
+        let verified = sig_address==req.params.address && req.params.handle ==results.username ? true : false 
 
-        //issue VC here
-        const config = {
-            method: "post",
-            url: "http://localhost:8083/v1/agent/createVerifiableCredential/",
-            headers: {
-                "authorization": "Bearer BEARERTOKEN",
-                "content-type": "application/json",
-            },
-            body: `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
-            \"https://staging.api.schemas.serto.id/v1/public/github-verify/1.0/json-schema.json\"], \
-            \"type\":[\"VerifiableCredential\",\"GithubVerify\"], \
-            \"issuer\":{\"id\":\"did:ethr:0x039c4df0450b6790efab89bc6e64375ec5c900a4e0ea5179655a94ae743643fc94\"}, \
-            \"issuanceDate\":\"2021-06-08T22:14:22.770Z\", \
-            \"credentialSubject\":{\"id\":\"did:ethr:${req.params.address}\", \
-                                    \"twitterAccount\":\"${req.params.handle}\", \
-                                    \"proof\":\"${req.params.link}\"}, \
-            \"credentialSchema\":{\"id\":\"https://staging.api.schemas.serto.id/v1/public/github-verify/1.0/json-schema.json\",\"type\":\"JsonSchemaValidator2018\"}}, \
-            \"revocable\":true,\"keepCopy\":true,\"save\":\"true\",\"proofFormat\":\"jwt\"}`
+        if(verified===true) {
+            const credential = JSON.stringify({
+                "credential": {
+                    "@context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://staging.api.schemas.serto.id/v1/public/github-verify/1.1/ld-context.json"
+                    ],
+                    "type": [
+                        "VerifiableCredential",
+                        "GithubVerify"
+                    ],
+                    "issuer": {
+                        "id": "did:ethr:0x02cb339a60324c92bd8f0169c7d819d178b3014da0ec4c85dd93afb8965a539584"
+                    },
+                    "issuanceDate": new Date().toISOString(),
+                    "credentialSubject": {
+                        "id": `did:ethr:${req.params.address}`,
+                        "githubAccount": req.params.handle,
+                        "proof": req.params.link
+                    },
+                    "credentialSchema": {
+                        "id": "https://staging.api.schemas.serto.id/v1/public/github-verify/1.0/json-schema.json",
+                        "type": "JsonSchemaValidator2018"
+                    }
+                },
+                "revocable": true,
+                "keepCopy": true,
+                "save": "true",
+                "proofFormat": "jwt"
+            })
+            const config = {
+                method: "post",
+                url: "https://beta.agent.serto.id/v1/agent/createVerifiableCredential/",
+                headers: {
+                    'authorization': process.env.API_KEY,
+                    'content-type': "application/json",
+                },
+                body: credential
             }
+            try {
+                console.log(config)
+                const response = await axios(config)
+                verified=true;
+                console.log(response.data)
+            } catch (error) {
+                console.log(error.response.data)
+                res.send(error)
+                verified=false;
+            }
+        }
 
         res.send({sig_address, verified});
     } catch (error) {
-        console.log(error)
-        res.send({ error: error.reason, verified: false});
+        // console.log(error)
+        // res.send({ error: error.reason, verified: false});
     }
 })
 
-app.get("/test", async (req,res) => {
-    console.log("hello")
-    const response = await sertoAuth()
-    console.log(response)
-    res.send(response)
-})
-
-async function sertoAuth () {
+app.get("/getCredential/:address/:platform", async (req, res) => {
     const config = {
         method: 'post',
-        url: 'http://beta.agent.serto.id/v1/auth/login',
+        url: 'https://beta.agent.serto.id/v1/agent/dataStoreORMGetVerifiableCredentials/',
         headers: { 
+          'authorization': process.env.API_KEY,
           'Content-Type': 'application/json'
         },
-        data : JSON.stringify({"username":process.env.SERTO_USERNAME,"password":process.env.SERTO_PASSWORD}) 
-      };
+        body: JSON.stringify({
+            "order": [
+              {
+                "column": "issuanceDate",
+                "direction": "DESC"
+              }
+            ],
+            "where": [
+              {
+                "column": "context",
+                "value": [
+                  [
+                    "https://www.w3.org/2018/credentials/v1",
+                    `https://staging.api.schemas.serto.id/v1/public/${req.params.social}-verify/1.1/ld-context.json`
+                  ]
+                ]
+              },
+              {
+                "column": "credentialSubject",
+                "value": [
+                    {"id":`did:ethr:${req.params.address}`}
+                ]
+              }
+            ]
+          })
+    }
 
     try {
-    const response = await axios(config)
-    return response;
+        const response = await axios(config)
+        // console.log(response.data)
+        res.send(response.data);
     } catch (error) {
-    console.error(error);
-    return "failed";
+        console.error(error);
+        res.send("failed");
     }
-}
+})
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => console.log(`listening on port ${port}...`));

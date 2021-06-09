@@ -6,9 +6,8 @@
   "dependencies": {},
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "react-app:start": "cd hack-eth-app/packages/react-app && yarn start",
-    "backend:start": "cd hack-eth-backend && node server.js"
+    "backend:start": "cd hack-eth-backend && nodemon server.js"
   },
   "repository": {
     "type": "git",

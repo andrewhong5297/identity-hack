@@ -97,7 +97,7 @@ function App() {
             <Nav.Link href="https://staging.schemas.serto.id/schema/twitter-verify">
               Twitter VC Schema
             </Nav.Link>
-            <Nav.Link href="https://staging.schemas.serto.id/schema/twitter-verify">
+            <Nav.Link href="https://staging.schemas.serto.id/schema/github-verify">
               Github VC Schema
             </Nav.Link>
           </Nav>
