@@ -46,7 +46,7 @@ app.get('/twitter/:handle/:message/:address', async (req,res) => {
 
         let verified = sig_address==req.params.address ? true : false 
 
-        console.log("finished verification: ", req.params.address, req.params.handle, final_link, req.params.message)
+        // console.log("finished verification: ", req.params.address, req.params.handle, final_link, req.params.message)
         
         if(verified===true) {
             console.log("try to issue vc...")
@@ -87,7 +87,7 @@ app.get('/twitter/:handle/:message/:address', async (req,res) => {
                     'authorization': process.env.API_KEY,
                     "content-type": "application/json",
                 },
-                body: credential
+                data: credential
                 }
             try {
                 console.log(config)
@@ -103,8 +103,8 @@ app.get('/twitter/:handle/:message/:address', async (req,res) => {
 
         res.send({sig_address, verified});
     } catch (error) {
-        // console.log(error)
-        // res.send({ error: error.reason, verified: false})
+        console.log(error)
+        res.send({ error: error.reason, verified: false})
     }
 })
 
@@ -120,7 +120,6 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
             let code = document.querySelector('div[class="Box-body p-0 blob-wrapper data type-javascript  gist-border-0"]').textContent
             return { username, code}
         }) 
-        // console.log(results);
 
         let sig = results.code.split("sig:")[1].trim();
         const sig_address = await ethers.utils.verifyMessage(req.params.message, sig);
@@ -164,7 +163,7 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
                     'authorization': process.env.API_KEY,
                     'content-type': "application/json",
                 },
-                body: credential
+                data: credential
             }
             try {
                 console.log(config)
@@ -180,53 +179,63 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
 
         res.send({sig_address, verified});
     } catch (error) {
-        // console.log(error)
-        // res.send({ error: error.reason, verified: false});
+        console.log(error)
+        res.send({ error: error.reason, verified: false});
     }
 })
+//http://localhost:4000/getCredential/0xa55E01a40557fAB9d87F993d8f5344f1b2408072/twitter/0x3e5bc75ec87956d14077a95002c2000dd128d1d7531f6985562ae33038bcda464554e033861a62afe73a85a7bd4e9aa4d65fdcda5cb6744e95a34622f1aaa2781b
+app.get("/getCredential/:address/:platform/:signature", async (req, res) => {
+    //get authorized to see their credential
+    const sig_address = await ethers.utils.verifyMessage(`${req.params.platform}data`, req.params.signature);
+    console.log("verified: ", sig_address)
+    let verified = sig_address==req.params.address ? true : false 
 
-app.get("/getCredential/:address/:platform", async (req, res) => {
-    const config = {
-        method: 'post',
-        url: 'https://beta.agent.serto.id/v1/agent/dataStoreORMGetVerifiableCredentials/',
-        headers: { 
-          'authorization': process.env.API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            "order": [
-              {
-                "column": "issuanceDate",
-                "direction": "DESC"
-              }
-            ],
-            "where": [
-              {
-                "column": "context",
-                "value": [
-                  [
-                    "https://www.w3.org/2018/credentials/v1",
-                    `https://staging.api.schemas.serto.id/v1/public/${req.params.social}-verify/1.1/ld-context.json`
-                  ]
-                ]
-              },
-              {
-                "column": "credentialSubject",
-                "value": [
-                    {"id":`did:ethr:${req.params.address}`}
-                ]
-              }
-            ]
-          })
-    }
+    if(verified) {
+         //post request for credential
+        const config = {
+            method: 'post',
+            url: 'https://beta.agent.serto.id/v1/agent/dataStoreORMGetVerifiableCredentials/',
+            headers: { 
+            'authorization': process.env.API_KEY,
+            'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                    "order": [
+                    {
+                        "column": "issuanceDate",
+                        "direction": "DESC"
+                    }
+                    ],
+                    "where": [
+                    {
+                        "column": "context",
+                        "value": [
+                        [
+                            "https://www.w3.org/2018/credentials/v1",
+                            `https://staging.api.schemas.serto.id/v1/public/${req.params.platform}-verify/1.1/ld-context.json`
+                        ]
+                        ]
+                    },
+                    {
+                        "column": "subject",
+                        "value": [
+                            {"did": `did:ethr:${req.params.address}`}
+                        ]
+                    }
+                    ]
+                })
+            }
 
-    try {
-        const response = await axios(config)
-        // console.log(response.data)
-        res.send(response.data);
-    } catch (error) {
-        console.error(error);
-        res.send("failed");
+            try {
+                const response = await axios(config)
+                // console.log(response.data)
+                res.send(response.data);
+            } catch (error) {
+                console.log(error.response.data)
+                res.send("failed");
+            }
+    } else {
+        res.send("not authorized")
     }
 })
 
