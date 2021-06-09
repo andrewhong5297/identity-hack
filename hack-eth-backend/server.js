@@ -51,12 +51,13 @@ app.get('/twitter/:handle/:message/:address', async (req,res) => {
 
         // issue VC here
         const config = {
-            "method": "POST",
-            "headers": {
+            method: "post",
+            url: "http://localhost:8083/v1/agent/createVerifiableCredential/",
+            headers: {
                 "authorization": "Bearer BEARERTOKEN",
                 "content-type": "application/json",
             },
-            "body": `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
+            body: `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
             \"https://staging.api.schemas.serto.id/v1/public/twitter-verify/1.1/ld-context.json\"], \
             \"type\":[\"VerifiableCredential\",\"TwitterVerify\"], \
             \"issuer\":{\"id\":\"did:ethr:0x039c4df0450b6790efab89bc6e64375ec5c900a4e0ea5179655a94ae743643fc94\"}, \
@@ -96,12 +97,13 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
 
         //issue VC here
         const config = {
-            "method": "POST",
-            "headers": {
+            method: "post",
+            url: "http://localhost:8083/v1/agent/createVerifiableCredential/",
+            headers: {
                 "authorization": "Bearer BEARERTOKEN",
                 "content-type": "application/json",
             },
-            "body": `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
+            body: `{\"credential\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\", \
             \"https://staging.api.schemas.serto.id/v1/public/github-verify/1.0/json-schema.json\"], \
             \"type\":[\"VerifiableCredential\",\"GithubVerify\"], \
             \"issuer\":{\"id\":\"did:ethr:0x039c4df0450b6790efab89bc6e64375ec5c900a4e0ea5179655a94ae743643fc94\"}, \
@@ -120,6 +122,13 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
     }
 })
 
+app.get("/test", async (req,res) => {
+    console.log("hello")
+    const response = await sertoAuth()
+    console.log(response)
+    res.send(response)
+})
+
 async function sertoAuth () {
     const config = {
         method: 'post',
@@ -132,8 +141,7 @@ async function sertoAuth () {
 
     try {
     const response = await axios(config)
-    res.send(response) //response should give us the JWT token, how is this stored? 
-    return "token";
+    return response;
     } catch (error) {
     console.error(error);
     return "failed";
