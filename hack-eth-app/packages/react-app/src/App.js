@@ -12,9 +12,8 @@ import {
   Nav,
   Col,
   Button,
-  Spinner,
   Container,
-  Alert
+  Card
 } from "react-bootstrap";
 
 import useWeb3Modal from "./hooks/useWeb3Modal";
@@ -55,8 +54,8 @@ function App() {
       setVerificationState(true)
     }
 
-    setGithubAccount("@andrewhong5297")
-    setTwitterAccount("@andrewhong5297")
+    setGithubAccount("andrewhong5297")
+    setTwitterAccount("andrewhong5297")
   }
   
   useEffect(() => {
@@ -64,7 +63,7 @@ function App() {
       const owner = provider.getSigner();
 
       if(owner!=undefined){
-          //call metamask snaps api
+          //call metamask snaps api. need a wallet instance and attach listeners? 
           checkVC()
       } 
     } catch (error) {
@@ -74,7 +73,7 @@ function App() {
   return (
     <div
       style={{
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${background})`, height: "100vh"
       }}
     >
       <Navbar bg="light" expand="lg">
@@ -108,50 +107,54 @@ function App() {
 
       <Container>
         <Row>
-          <Col>
-            <Button style = {{fontSize: 14}}
-                              onClick={() => setTwitterModalShow(true)}
-                              variant="secondary"
-                              disabled={verificationState}
-                            >
-                              Get Twitter Verification
-                            </Button >
-            <TwitterForm
-              show={twitterModalShow}
-              onHide={() => setTwitterModalShow(false)}
-              provider={provider}
-            />
-          </Col>
+            <Col>
+              <Card>
+                <Button style = {{fontSize: 14}}
+                                  className='m-1'
+                                  onClick={() => setTwitterModalShow(true)}
+                                  variant="secondary"
+                                  disabled={verificationState}
+                                >
+                                  Get Twitter Verification
+                                </Button >
+                <TwitterForm
+                  show={twitterModalShow}
+                  onHide={() => setTwitterModalShow(false)}
+                  provider={provider}
+                />
 
-          <Col>
-            <Button style = {{fontSize: 14}}
-                              onClick={() => setGithubModalShow(true)}
-                              variant="secondary"
-                              disabled={verificationState}
-                            >
-                              Get Github Verification
-                            </Button >
-            <GithubForm
-              show={githubModalShow}
-              onHide={() => setGithubModalShow(false)}
-              provider={provider}
-            />
-          </Col>
+                <br></br>
+                <br></br>
+                <h5>&nbsp;&nbsp;Found credential for Twitter Handle: <a target = "_blank" href={`https://twitter.com/@${twitterAccount}`} >@{twitterAccount}</a></h5>
+                <br></br>
+              </Card>
+            </Col>
+
+            <Col>
+              <Card>
+                <Button style = {{fontSize: 14}}
+                                    className='m-1'
+                                    onClick={() => setGithubModalShow(true)}
+                                    variant="secondary"
+                                    disabled={verificationState}
+                                  >
+                                    Get Github Verification
+                                  </Button >
+                  <GithubForm
+                    show={githubModalShow}
+                    onHide={() => setGithubModalShow(false)}
+                    provider={provider}
+                  />
+
+                <br></br>
+                <br></br>
+                <h5>&nbsp;&nbsp;Found credential for Github Handle: <a target = "_blank" href={`https://github.com/${githubAccount}`} >@{githubAccount}</a></h5>
+                <br></br>
+              </Card>
+            </Col>
         </Row>
 
-        <br></br>
-        <br></br>
-
-        <Row>
-          <Col>
-           <h5>Found credential for Twitter Handle: {twitterAccount} </h5>
-          </Col>
-          <Col>
-           <h5>Found credential for Github Handle: {githubAccount}</h5>
-          </Col>
-        </Row>
       </Container>
-      {/* fill out the whole page with twitter and github data */}
     </div>
   );
 }
