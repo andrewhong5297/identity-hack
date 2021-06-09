@@ -42,6 +42,7 @@ export const TwitterForm = (props) => {
         setMessage(tempMessage);
 
         const sig = await owner.signMessage(tempMessage);        
+
         setTweetUrl(`https://twitter.com/intent/tweet?text=Tweeting%20to%20verify%20ownership%20hack-id%20sig:${sig}`)
         setTweetButtonState(false) //make tweet button visible
     } 
@@ -52,6 +53,7 @@ export const TwitterForm = (props) => {
         const address = await owner.getAddress();
         const handle = message.split(" ")[0]
 
+        console.log(`URL: http://localhost:4000/twitter/${handle}/${encodeURI(message)}/${address}`)
         const results = await axios.get(`http://localhost:4000/twitter/${handle}/${encodeURI(message)}/${address}`)
         console.log(results.data)
         setLoading(false)
