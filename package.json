@@ -1,0 +1,23 @@
+{
+  "name": "identity-hack",
+  "version": "1.0.0",
+  "description": "frontend and backend for serto + metamask snaps twitter/github credentials",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "react-app:start": "cd hack-eth-app/packages/react-app && yarn start",
+    "backend:start": "cd hack-eth-backend && node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrewhong5297/identity-hack.git"
+  },
+  "author": "Andrew Hong",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrewhong5297/identity-hack/issues"
+  },
+  "homepage": "https://github.com/andrewhong5297/identity-hack#readme"
+}
