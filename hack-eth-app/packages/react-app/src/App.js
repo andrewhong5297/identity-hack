@@ -4,7 +4,6 @@ import { getDefaultProvider } from "@ethersproject/providers";
 import { useState, useEffect } from "react";
 import background from "./congruent_pentagon.png"
 import { ethers } from "ethers";
-const axios = require('axios');
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
@@ -23,6 +22,7 @@ import { TwitterForm } from "./components/TwitterForm"
 import { GithubForm } from "./components/GithubForm"
 import ReactEmbedGist from 'react-embed-gist';
 import { Tweet } from 'react-twitter-widgets'
+const axios = require('axios');
 
 function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
   return (
@@ -45,40 +45,63 @@ function App() {
   const [twitterModalShow, setTwitterModalShow] = useState(false);
   const [githubModalShow, setGithubModalShow] = useState(false);
 
-  const [githubAccount, setGithubAccount] = useState("not set")
-  const [twitterAccount, setTwitterAccount] = useState("not set")
-  const [githubLink, setGithubLink] = useState("none")
-  const [twitterLink, setTwitterLink] = useState("none")
-  const [verificationState, setVerificationState] = useState(false)
+  const [githubAccount, setGithubAccount] = useState("")
+  const [twitterAccount, setTwitterAccount] = useState("")
+  const [githubLink, setGithubLink] = useState("")
+  const [twitterLink, setTwitterLink] = useState("")
+  const [verificationStateG, setVerificationStateG] = useState(false)
+  const [verificationStateT, setVerificationStateT] = useState(false)
 
+
+  //this function should sit inside of metamask snap if possible.
   async function checkVC(platform) {
     const owner = provider.getSigner();
     const address = await owner.getAddress();
-    const sig = await owner.signMessage(`${platform}test`);        
+    const sig = await owner.signMessage(`${platform} access`);        
 
-    console.log("checking for VCs")
+    console.log("checking for VC...")
     const results = await axios.get(`http://localhost:4000/getCredential/${address}/${platform}/${sig}`)
-    console.log(results)
+    console.log(results.data)
 
-    const verified = false
-    if (verified) {
-      setVerificationState(true)
-      //query for VC 
+    if (results.data.length>0) {      
+      //add method for filtering all unique later, "foreach" isn't required if we can filter straight from api query. 
+      if(platform==="github"){
+        let found = false;
+        results.data.forEach((d) => {
+          if(d.verifiableCredential.credentialSubject.id===`did:ethr:${address}` && found===false)
+          {
+            console.log(d.verifiableCredential.credentialSubject.proof.split("/"))
+            setGithubAccount(d.verifiableCredential.credentialSubject.githubAccount)
+            setGithubLink(d.verifiableCredential.credentialSubject.proof)
+            setVerificationStateG(true)
+            found=true
+          }
+        })
+      } else if (platform==="twitter") {
+        let found = false;
+        results.data.forEach((d) => {
+          if(d.verifiableCredential.credentialSubject.id===`did:ethr:${address}` && found===false)
+          {
+            console.log(d.verifiableCredential.credentialSubject.proof.split("/"))
+            setTwitterAccount(d.verifiableCredential.credentialSubject.twitterAccount)
+            setTwitterLink(d.verifiableCredential.credentialSubject.proof.split("/")[5])
+            setVerificationStateT(true)
+            found=true
+          }
+        })
+      }
+    } else {
+      console.log(`no VC found yet for ${platform}`)
     }
-
-    setGithubAccount("andrewhong5297")
-    setTwitterAccount("andrewhong5297")
-    setGithubLink("ec166e0aec3ae3c9bfe7eb2a0ceeae7f")
-    setTwitterLink("1402438431461064704")
   }
   
   // useEffect(() => {
   //   try {
   //     const owner = provider.getSigner();
-
   //     if(owner!=undefined){
   //         //call metamask snaps api. need a wallet instance and attach listeners? 
-  //         checkVC()
+  //         checkVC("twitter")
+  //         checkVC("github")
   //     } 
   //   } catch (error) {
   //   }
@@ -127,7 +150,7 @@ function App() {
                                   className='m-1'
                                   onClick={() => setTwitterModalShow(true)}
                                   variant="primary"
-                                  disabled={verificationState}
+                                  disabled={verificationStateT}
                                 >
                                   Get Twitter Verification
                                 </Button >
@@ -137,7 +160,10 @@ function App() {
                   provider={provider}
                 />
 
-                <Button onClick={() => checkVC("Twitter")}>Check for Twitter credential</Button>
+                <Button style = {{fontSize: 14}}
+                                  className='m-1'
+                                  variant="secondary"
+                                  onClick={() => checkVC("twitter")}>Check for Twitter credential</Button>
 
                 <br></br>
                 <br></br>
@@ -155,7 +181,7 @@ function App() {
                                     className='m-1'
                                     onClick={() => setGithubModalShow(true)}
                                     variant="primary"
-                                    disabled={verificationState}
+                                    disabled={verificationStateG}
                                   >
                                     Get Github Verification
                                   </Button >
@@ -165,13 +191,16 @@ function App() {
                     provider={provider}
                   />
 
-                <Button onClick={() => checkVC("Github")}>Check for Github credential</Button>
+                <Button style = {{fontSize: 14}}
+                                  className='m-1'
+                                  variant="secondary"
+                                  onClick={() => checkVC("github")}>Check for Github credential</Button>
 
                 <br></br>
                 <br></br>
                 <h5>&nbsp;&nbsp;Found credential for Github Handle: <a target = "_blank" href={`https://github.com/${githubAccount}`} >@{githubAccount}</a></h5>
                 <div className="ml-3">
-                  <ReactEmbedGist gist={`${githubAccount}}/${githubLink}`}/>
+                  <ReactEmbedGist gist={`${githubAccount}/${githubLink}`}/>
                 </div>
                 
                 <br></br>

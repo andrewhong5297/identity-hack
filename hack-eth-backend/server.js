@@ -186,8 +186,10 @@ app.get('/github/:handle/:message/:address/:link', async (req,res) => {
 //http://localhost:4000/getCredential/0xa55E01a40557fAB9d87F993d8f5344f1b2408072/twitter/0x3e5bc75ec87956d14077a95002c2000dd128d1d7531f6985562ae33038bcda464554e033861a62afe73a85a7bd4e9aa4d65fdcda5cb6744e95a34622f1aaa2781b
 app.get("/getCredential/:address/:platform/:signature", async (req, res) => {
     //get authorized to see their credential
-    const sig_address = await ethers.utils.verifyMessage(`${req.params.platform}data`, req.params.signature);
-    console.log("verified: ", sig_address)
+    console.log(`${req.params.platform}data`)
+    console.log(req.params.signature)
+    const sig_address = await ethers.utils.verifyMessage(`${req.params.platform} access`, req.params.signature);
+    console.log(`sig decodes into: ${sig_address} and expected ${req.params.address}`)
     let verified = sig_address==req.params.address ? true : false 
 
     if(verified) {
