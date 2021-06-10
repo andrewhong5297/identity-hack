@@ -216,17 +216,18 @@ app.get("/getCredential/:address/:platform/:signature", async (req, res) => {
                         ]
                         ]
                     },
-                    {
-                        "column": "subject",
-                        "value": [
-                            {"did": `did:ethr:${req.params.address}`}
-                        ]
-                    }
+                    // {
+                    //     "column": "subject",
+                    //     "value": [
+                    //         // {"twitterAccount": `AndrewRinkeby`}
+                    //     ]
+                    // }
                     ]
                 })
             }
 
             try {
+                console.log(config)
                 const response = await axios(config)
                 // console.log(response.data)
                 res.send(response.data);

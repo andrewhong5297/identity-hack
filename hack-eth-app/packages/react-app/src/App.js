@@ -4,6 +4,7 @@ import { getDefaultProvider } from "@ethersproject/providers";
 import { useState, useEffect } from "react";
 import background from "./congruent_pentagon.png"
 import { ethers } from "ethers";
+const axios = require('axios');
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
@@ -50,9 +51,15 @@ function App() {
   const [twitterLink, setTwitterLink] = useState("none")
   const [verificationState, setVerificationState] = useState(false)
 
-  async function checkVC() {
+  async function checkVC(platform) {
+    const owner = provider.getSigner();
+    const address = await owner.getAddress();
+    const sig = await owner.signMessage(`${platform}test`);        
+
     console.log("checking for VCs")
-    //need to check for VCs, if false then allow buttons otherwise disable buttons.
+    const results = await axios.get(`http://localhost:4000/getCredential/${address}/${platform}/${sig}`)
+    console.log(results)
+
     const verified = false
     if (verified) {
       setVerificationState(true)
@@ -65,17 +72,17 @@ function App() {
     setTwitterLink("1402438431461064704")
   }
   
-  useEffect(() => {
-    try {
-      const owner = provider.getSigner();
+  // useEffect(() => {
+  //   try {
+  //     const owner = provider.getSigner();
 
-      if(owner!=undefined){
-          //call metamask snaps api. need a wallet instance and attach listeners? 
-          checkVC()
-      } 
-    } catch (error) {
-    }
-  },[provider])
+  //     if(owner!=undefined){
+  //         //call metamask snaps api. need a wallet instance and attach listeners? 
+  //         checkVC()
+  //     } 
+  //   } catch (error) {
+  //   }
+  // },[provider])
 
   return (
     <div
@@ -130,6 +137,8 @@ function App() {
                   provider={provider}
                 />
 
+                <Button onClick={() => checkVC("Twitter")}>Check for Twitter credential</Button>
+
                 <br></br>
                 <br></br>
                 <h5>&nbsp;&nbsp;Found credential for Twitter Handle: <a target = "_blank" href={`https://twitter.com/@${twitterAccount}`} >@{twitterAccount}</a></h5>
@@ -155,6 +164,8 @@ function App() {
                     onHide={() => setGithubModalShow(false)}
                     provider={provider}
                   />
+
+                <Button onClick={() => checkVC("Github")}>Check for Github credential</Button>
 
                 <br></br>
                 <br></br>
