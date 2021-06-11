@@ -26,8 +26,7 @@
     <br/>
 
     <button class="connect">Connect</button>
-    <button class="getAddress">Get Twitter Credential</button>
-    <button class="sendHello">Get Github Credential</button>
+    <button class="getTwitterVC">Get Twitter Credential</button>
   </body>
 
   <script>
@@ -36,12 +35,10 @@
     const snapId = `wallet_plugin_${origin}`
 
     const connectButton = document.querySelector('button.connect')
-    const sendButton = document.querySelector('button.sendHello')
-    const getAddressButton = document.querySelector('button.getAddress')
+    const getTwitterVCButton = document.querySelector('button.getTwitterVC')
 
     connectButton.addEventListener('click', connect)
-    sendButton.addEventListener('click', send)
-    getAddressButton.addEventListener('click', getAddress)
+    getTwitterVCButton.addEventListener('click', getTwitterVC)
 
     async function connect () {
       await ethereum.request({
@@ -52,28 +49,12 @@
       })
     }
 
-    async function getAddress () {
+    async function getTwitterVC () {
       try {
         const response = await ethereum.request({
           method: snapId,
           params: [{
-            method: 'address',
-          }]
-        })
-        console.log('responded: ' + response)
-      } catch (err) {
-        console.error(err)
-        alert('Problem happened: ' + err.message || err)
-      }
-    }
-
-    async function send () {
-      try {
-        const response = await ethereum.request({
-          method: snapId,
-          params: [{
-            method: 'signMessage',
-            params: ['Hello, world!'],
+            method: 'getTwitterVC',
           }]
         })
         console.log('responded: ' + response)

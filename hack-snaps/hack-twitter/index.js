@@ -22,13 +22,13 @@ wallet.registerRpcMessageHandler(async (_originString, requestObject) => {
     case 'address':
       return ethWallet.address;
 
-    case 'signMessage': {
+    case 'getTwitterVC': {
       const message = requestObject.params[0];
       console.log('trying to sign message', message);
       return ethWallet.signMessage(message);
       // //get twitter VC
       // const address = ethWallet.address;
-      // const sig = await owner.signMessage(`twitter access`);        
+      // const sig = await ethWallet.signMessage(`twitter access`);        
 
       // console.log("checking for VC...")
       // const results = await axios.get(`http://localhost:4000/getCredential/${address}/twitter/${sig}`)
