@@ -132,7 +132,7 @@ function App() {
           <span role="img" aria-label="doge">
           🆔
           </span>{" "}
-          Hack-Identity
+          Identity-Hack
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
