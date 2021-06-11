@@ -25,4 +25,4 @@ The snaps code is theoretically working (i.e. the api "getCredential" is migrate
 
 ## Project Sequence Diagram
 
-![alt text](https://github.com/andrewhong5297/diskovery/blob/master/CSI_hackflow.jpg)
+![alt text](https://github.com/andrewhong5297/identity-hack/blob/master/CSI_hackflow.jpg)
