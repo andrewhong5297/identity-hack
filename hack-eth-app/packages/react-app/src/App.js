@@ -1,6 +1,4 @@
 import React from "react";
-import { Contract } from "@ethersproject/contracts";
-import { getDefaultProvider } from "@ethersproject/providers";
 import { useState, useEffect } from "react";
 import background from "./congruent_pentagon.png"
 import { ethers } from "ethers";
@@ -22,6 +20,9 @@ import { TwitterForm } from "./components/TwitterForm"
 import { GithubForm } from "./components/GithubForm"
 import ReactEmbedGist from 'react-embed-gist';
 import { Tweet } from 'react-twitter-widgets'
+
+import {enableFilecoinSnap, metamaskFilecoinSnap} from "@nodefactory/filsnap-adapter"
+
 const axios = require('axios');
 
 function WalletButton({ provider, loadWeb3Modal, logoutOfWeb3Modal }) {
@@ -95,13 +96,26 @@ function App() {
     }
   }
   
+  async function connectSnap() {
+    // install snap and fetch API
+    const snap = await enableFilecoinSnap({network: "t"});
+    const api = await metamaskFilecoinSnap.getFilecoinSnapApi();
+    
+    // invoke API
+    const address = await api.getAddress();
+    
+    console.log(`Snap installed, account generated with address: ${address}`);
+  }
+
+  // /// this is for on provider load instead of onClick buttons.
   // useEffect(() => {
   //   try {
   //     const owner = provider.getSigner();
   //     if(owner!=undefined){
-  //         //call metamask snaps api. need a wallet instance and attach listeners? 
-  //         checkVC("twitter")
-  //         checkVC("github")
+  //         connectSnap()
+  //         // //call metamask snaps api. need a wallet instance and attach listeners? 
+  //         // checkVC("twitter")
+  //         // checkVC("github")
   //     } 
   //   } catch (error) {
   //   }
