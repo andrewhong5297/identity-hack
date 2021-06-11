@@ -20,3 +20,9 @@ yarn && yarn backend:start
 ```
 
 The snaps code is theoretically working (i.e. the api "getCredential" is migrated from the app to the snap), but there are issues with the build as the feature/product is not ready right now and is going through a rework.
+
+---
+
+## Project Sequence Diagram
+
+![alt text](https://github.com/andrewhong5297/diskovery/blob/master/CSI_hackflow.jpg)
