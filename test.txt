@@ -1,150 +1,151 @@
---h/t 0xBoxer, formatted/commented by Andrew
+
 with juniors as 
 (
-    with ratioq as 
-    (
-        with ratio as 
-        (
-            --fee is taken out for compound comptroller
-            SELECT  date_trunc('day', evt_block_time) as day,
-                    contract_address,
-                    "underlyingIn"-fee, 
-                    "tokensOut",
-                    ("underlyingIn"-fee)/"tokensOut" as ratios
-            FROM barnbridge."smartYield_evt_BuyTokens" 
-            
-            UNION ALL
-            
-            SELECT  date_trunc('day', evt_block_time) as day,
-                    contract_address,
-                    "underlyingOut", 
-                    "tokensIn",
-                    "underlyingOut"/"tokensIn" as ratios
-            FROM barnbridge."smartYield_evt_SellTokens"
-            where "tokensIn" != 0
-            )
-            
-            , ratioavg as 
-            (
-            SELECT  day, 
-                    contract_address,
-                    avg(ratios) as ratios
-            from ratio
-            group by 1, 2
-            )
+with ratioq as (
+with ratio as 
+(
+SELECT  date_trunc('day', evt_block_time) as day,
+        contract_address,
+        "underlyingIn"-fee, 
+        "tokensOut",
+        ("underlyingIn"-fee)/"tokensOut" as ratios
+FROM barnbridge."smartYield_evt_BuyTokens" b
+
+
+
+UNION ALL
+
+
+SELECT  date_trunc('day', evt_block_time) as day,
+        contract_address,
+        "underlyingOut", 
+        "tokensIn",
+        "underlyingOut"/"tokensIn" as ratios
+FROM barnbridge."smartYield_evt_SellTokens"
+where "tokensIn" != 0
+)
+
+, ratioavg as 
+(
+SELECT  day,
+        contract_address,
+        avg(ratios) as ratios
+from ratio
+group by 1,2
+)
+
+,days AS 
+(
+SELECT generate_series('2021-03-14'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+)
+
+, ratio_with_lead_day as 
+(
+SELECT  ratios,
+        contract_address,
+        day,
+        lead(day, 1, now()) OVER (partition by contract_address ORDER BY day) AS next_day 
+FROM ratioavg
+)
+
+ SELECT  ratios, 
+        d.day,
+        a.contract_address,
+        symbol
+
+FROM days d
+left join ratio_with_lead_day a on a.day <= d.day AND d.day < a.next_day
+left join dune_user_generated.smartyield_token_mapping u on u.contract_address= a.contract_address
+--only updates when there is action inside of the pool
+--growth is negative sometimes because seniors need to be paid
+
+)
+
+,depositjbonds as
+(
+SELECT  buyer,
+        evt_tx_hash,
+        contract_address,
+        "tokensOut" as deposit,
+        date_trunc('day', evt_block_time) as day
         
-            ,days AS 
-            (
-            SELECT generate_series('2021-03-14'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
-            )
-            
-            --not 100% sure why this shift is needed, probably date indexing issue?
-            , ratio_with_lead_day as 
-            (
-            SELECT  ratios,
-                    contract_address,
-                    day,
-                    lead(day, 1, now()) OVER (ORDER BY day) AS next_day 
-            FROM ratioavg
-            )
-            
-            SELECT  ratios, 
-                    d.day,
-                    a.contract_address,
-                    symbol
-            FROM days d
-            left join ratio_with_lead_day a on a.day <= d.day AND d.day < a.next_day
-            left join dune_user_generated.smartyield_token_mapping u on u.contract_address= a.contract_address
-        )
+FROM barnbridge."smartYield_evt_BuyTokens"
+)
+
+,redeemjbonds as
+(
+SELECT  seller as buyer,
+        evt_tx_hash,
+        contract_address,
+        -"tokensIn" as deposit,
+        date_trunc('day', evt_block_time) as day
         
-    --buying jtokens with USDC
-    ,depositjtokens as
-    (
-    SELECT  buyer,
-            evt_tx_hash,
-            contract_address,
-            "tokensOut" as deposit,
-            date_trunc('day', evt_block_time) as day
-    FROM barnbridge."smartYield_evt_BuyTokens"
-    )
-    
-    --selling jtokens for underlying USDC after adjusted price/forfeiture to senior bonds
-    ,redeemjtokens as
-    (
-    SELECT  seller as buyer,
-            evt_tx_hash,
-            contract_address,
-            -"tokensIn" as deposit,
-            date_trunc('day', evt_block_time) as day
-    FROM barnbridge."smartYield_evt_SellTokens"
-    )
-    
-    --this is used to join any time series to fill in gap dates
-    ,days AS 
-    (
-    SELECT generate_series('2021-03-14'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
-    )
-    
-    --finding the gap days
-    , deposittokens_with_gap_days as 
-    (
-    SELECT
-            buyer, 
-            deposit, 
-            contract_address,
-            day,
-            lead(day, 1, now()) OVER (partition by evt_tx_hash ORDER BY day) AS next_day 
-    FROM depositjtokens
-    )
-    
-    --finding the gap days
-    , redeemjtokens_with_gap_days as 
-    (
-    SELECT
-            buyer, 
-            deposit, 
-            contract_address,
-            day,
-            lead(day, 1, now()) OVER (partition by evt_tx_hash ORDER BY day) AS next_day 
-    FROM redeemjtokens
-    )
-    
-    , redeemfinal as 
-    (
-    SELECT  buyer, 
-            sum(a.deposit) as deposit, 
-            contract_address,
-            d.day
-    
-    FROM days d
-    left join redeemjtokens_with_gap_days a on a.day <= d.day AND d.day < a.next_day
-    group by 1,3,4
-    )
-    
-    , depositfinal as 
-    (
-    SELECT  buyer, 
-            sum(a.deposit) as deposit, 
-            a.contract_address,
-            d.day
-    
-    FROM days d
-    left join deposittokens_with_gap_days a on a.day = d.day
-    group by 1,3,4
-    )
-        
-    
-    SELECT
-    sum(((d.deposit + coalesce(r.deposit,0))/10^u.u_decimals)*ratios) as deposits,
-    d.day,
-    d.contract_address,
-    u.symbol
-    
-    FROM
-    depositfinal d
-    left join redeemfinal r  on d.day = r.day and d.buyer = r.buyer and r.contract_address = d.contract_address --joined on day, buyer, and contract address to keep consistent rows and seperate pools
-    left join ratioq q on d.day = q.day and q.contract_address = d.contract_address --joined to get the avgratio per day and contract
-    left join dune_user_generated.smartyield_token_mapping u on u.contract_address= q.contract_address --joined to get symbol and decimals per contract
-    where ((d.deposit + coalesce(r.deposit,0))*ratios)/10^u.u_decimals > 0 
-    group by 2, 3 , 4
+FROM barnbridge."smartYield_evt_SellTokens"
+)
+
+,days AS 
+(
+SELECT generate_series('2021-03-14'::timestamp, date_trunc('day', NOW()), '1 day') AS day -- Generate all days since the first contract
+)
+
+, depositbondsbonds_with_gap_days as 
+(
+SELECT
+        buyer,
+        contract_address,
+        deposit, 
+        day,
+        lead(day, 1, now()) OVER (partition by evt_tx_hash, contract_address ORDER BY day) AS next_day 
+FROM depositjbonds
+)
+
+, redeemjbondsbonds_with_gap_days as 
+(
+SELECT
+        buyer,
+        contract_address,
+        deposit, 
+        day,
+        lead(day, 1, now()) OVER (partition by evt_tx_hash, contract_address ORDER BY day) AS next_day 
+FROM redeemjbonds
+)
+
+, redeemfinal as 
+(
+SELECT  buyer, 
+        sum(a.deposit) as deposit,
+        contract_address,
+        d.day
+
+FROM days d
+left join redeemjbondsbonds_with_gap_days a on a.day <= d.day AND d.day < a.next_day
+group by 1,3,4
+)
+
+, depositfinal as 
+(
+SELECT  buyer, 
+        sum(a.deposit) as deposit,
+        a.contract_address,
+        d.day
+
+FROM days d
+left join depositbondsbonds_with_gap_days a on a.day <= d.day AND d.day < a.next_day
+group by 1,3,4
+)
+
+
+SELECT
+sum(((d.deposit + coalesce(r.deposit,0))/10^u.u_decimals)*ratios) as deposits,
+d.day,
+d.contract_address,
+u.symbol
+
+FROM
+depositfinal d
+left join redeemfinal r  on d.day = r.day and d.buyer = r.buyer and r.contract_address = d.contract_address
+left join ratioq q on d.day = q.day and q.contract_address = d.contract_address
+left join dune_user_generated.smartyield_token_mapping u on u.contract_address= q.contract_address
+where ((d.deposit + coalesce(r.deposit,0))*ratios)/10^u.u_decimals > 0
+group by 2, 3 , 4
 ),
